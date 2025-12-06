@@ -7,14 +7,13 @@ import random
 from datetime import datetime
 
 app = Flask(__name__)
-# 🔑 SECRET KEY (Required for Sessions/Cookies)
+# 🔑 SECRET KEY
 app.secret_key = 'lumina_secret_key_change_this_in_production'
 
 # --- 1. CONFIGURATION & DATABASE ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'artifacts')
 
-# Database Config (Creates lumina.db in your project folder)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(BASE_DIR, "lumina.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -27,14 +26,16 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
 
-# --- 3. DATA LOADING (Standard) ---
+# --- 3. DATA LOADING ---
 PRODUCTS_MAP = {}       
 PRODUCT_NAMES_MAP = {}  
 RECOMMENDATIONS = {}    
 
 def load_data():
     global PRODUCTS_MAP, RECOMMENDATIONS, PRODUCT_NAMES_MAP
-    if not os.path.exists(DATA_DIR): return
+    if not os.path.exists(DATA_DIR): 
+        print(f"❌ DATA_DIR not found: {DATA_DIR}")
+        return
 
     # Load Catalog
     possible_filenames = ['product_matrix.json', 'product_index_map.json']
@@ -56,7 +57,8 @@ def load_data():
                     PRODUCTS_MAP[pid] = item
                     PRODUCT_NAMES_MAP[item.get('product_name', '').strip()] = pid
             print(f"✅ Data Loaded: {len(PRODUCTS_MAP)} products.")
-        except: pass
+        except Exception as e:
+            print(f"❌ Error loading data: {e}")
 
     # Load Recommendations
     rec_path = os.path.join(DATA_DIR, 'precomputed_hybrid.json')
@@ -81,18 +83,23 @@ def normalize_product(p):
         "p_link": p.get('product_link', '#')
     }
 
+# --- 🔥 CRITICAL FIX: RUN INIT LOGIC GLOBALLY 🔥 ---
+# This ensures data is loaded when Gunicorn imports the app
+with app.app_context():
+    db.create_all()
+    load_data()
+
 # --- 4. ROUTES ---
 
 @app.route('/')
 def home():
-    # Check if user is logged in via Session
     user_name = None
     if 'user_id' in session:
         user = User.query.get(session['user_id'])
         if user: user_name = user.name
     return render_template('index.html', user_name=user_name)
 
-# --- 🔐 AUTHENTICATION ROUTES (REAL LOGIC) ---
+# --- AUTH ROUTES ---
 
 @app.route('/api/signup', methods=['POST'])
 def signup():
@@ -101,11 +108,9 @@ def signup():
     email = data.get('email')
     password = data.get('password')
 
-    # Check if user already exists
     if User.query.filter_by(email=email).first():
         return jsonify({"status": "error", "message": "Email already registered"}), 400
 
-    # Secure Password Hashing
     hashed_pw = generate_password_hash(password, method='pbkdf2:sha256')
     new_user = User(name=name, email=email, password_hash=hashed_pw)
     
@@ -123,12 +128,10 @@ def login():
 
     user = User.query.filter_by(email=email).first()
 
-    # Check Password
     if user and check_password_hash(user.password_hash, password):
         session['user_id'] = user.id
         return jsonify({"status": "success", "user": user.name})
     
-    # ❌ If failed, send Error
     return jsonify({"status": "error", "message": "Invalid email or password"}), 401
 
 @app.route('/api/logout', methods=['POST'])
@@ -136,7 +139,7 @@ def logout():
     session.pop('user_id', None)
     return jsonify({"status": "success"})
 
-# --- 🔍 PRODUCT API ROUTES ---
+# --- PRODUCT API ROUTES ---
 
 @app.route('/api/products/top')
 def get_top_products():
@@ -179,11 +182,6 @@ def search_products():
     return jsonify([normalize_product(item[1]) for item in scored[:20]])
 
 if __name__ == '__main__':
-    # Initialize Database Table if not exists
-    with app.app_context():
-        db.create_all()
-        print("💽 Database initialized.")
-        
-    load_data()
-    # Changed port to 5001 to avoid 'Access Denied' / AirPlay conflict on MacOS
-    app.run(debug=True, port=5001)
+    # Local development run
+    port = int(os.environ.get("PORT", 5001))
+    app.run(host='0.0.0.0', port=port, debug=False)
