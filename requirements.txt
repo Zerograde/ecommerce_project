@@ -1,3 +1,9 @@
-Flask
-gunicorn
-flask_sqlalchemy
+fastapi
+uvicorn
+jinja2
+sqlalchemy
+pydantic
+python-multipart
+werkzeug
+itsdangerous
+starlette
