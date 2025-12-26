@@ -40,26 +40,14 @@
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** React.js / Next.js
-- **Backend:** Node.js / Express
-- **Database:** MongoDB / PostgreSQL
+- **Frontend:** HTML / CSS
+- **Backend:** FastAPI
 - **Deployment:** [Render](https://lumina-ecommerce-h6e3.onrender.com)
-- **Styling:** TailwindCSS / Sass
+- **Styling:** TailwindCSS 
 
 ---
 
-## 📂 Project Structure
 
-```
-ecommerce_project/
-  ├─ frontend/       # React/Next codebase
-  ├─ backend/        # Node/Express API
-  ├─ assets/         # Screenshots & images
-  ├─ README.md
-  └─ ...other files
-```
-
----
 
 ## 🤝 Contribute
 
@@ -83,31 +71,11 @@ decode.amit6207@gmail.com
    cd ecommerce_project
    ```
 
-2. Install dependencies for both frontend and backend:
-   ```bash
-   cd frontend && npm install
-   cd ../backend && npm install
-   ```
-
-3. Set environment variables as needed.
-
-4. Start development servers:
-   ```bash
-   # One terminal for backend
-   cd backend && npm start
-
-   # One terminal for frontend
-   cd frontend && npm start
-   ```
-
-5. The app will be available at `http://localhost:3000`
-
 ---
 
 ## 🌐 Deployment
 
 The application is deployed and running on [Render](https://lumina-ecommerce-h6e3.onrender.com).  
-Push your changes and Render will handle redeployment automatically.
 
 ---
 
