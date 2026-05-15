@@ -78,5 +78,3 @@ decode.amit6207@gmail.com
 The application is deployed and running on [Render](https://lumina-ecommerce-h6e3.onrender.com).  
 
 ---
-
-> You’re welcome to use or modify this template to make your e-commerce project shine!
